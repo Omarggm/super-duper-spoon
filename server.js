@@ -1,20 +1,36 @@
 const mysql = require("mysql2");
 const inquirer = require("inquirer");
 const express = require("express");
+const dotenv = require("dotenv");
 
 const PORT = process.env.PORT || 3001;
 const app = express();
 
+// Load environment variables from .env file
+dotenv.config();
+
 // create the connection to database
-const connection = mysql.createConnection(
-  {
-    host: "localhost",
-    user: "root",
-    password: "password",
-    database: "employee_db",
-  },
-  console.log("connected to the employee_db database.")
-);
+const connection = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
+});
+
+// Connect to the database
+connection.connect((err) => {
+  if (err) {
+    console.error("Error connecting to the database: ", err);
+    return;
+  }
+  console.log("Connected to the database.");
+});
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
 
 // call the function to start the app
 startApp();
@@ -276,4 +292,3 @@ function updateEmployeeRole() {
     });
   });
 }
-  
