@@ -124,7 +124,7 @@ function addDepartment() {
     });
 }
 
-function addRole() {
+function addEmployee() {
   inquirer
     .prompt([
       {
@@ -183,3 +183,97 @@ function addRole() {
       );
     });
 }
+
+function addRole() {
+  inquirer
+    .prompt([
+      {
+        name: "role",
+        type: "input",
+        message: "What is the name of the role?",
+      },
+      {
+        name: "salary",
+        type: "input",
+        message: "What is the salary for this role?",
+      },
+      {
+        name: "department",
+        type: "list",
+        message: "Select the department for this role.",
+        choices: departments.map((department) => department.name),
+      },
+    ])
+    .then((answer) => {
+      const department = departments.find(
+        (department) => department.name === answer.department
+      );
+      connection.query(
+        "INSERT INTO role SET ?",
+        {
+          title: answer.role,
+          salary: answer.salary,
+          department_id: department.id,
+        },
+        function (err, res) {
+          if (err) throw err;
+          console.log("Role added succesfully!");
+          startApp();
+        }
+      );
+    }
+    );
+}
+
+function updateEmployeeRole() {
+  connection.query("SELECT * FROM employee", function (err, employees) {
+    if (err) throw err;
+    connection.query("SELECT * FROM role", function (err, roles) {
+      if (err) throw err;
+      inquirer
+        .prompt([
+          {
+            name: "employee",
+            type: "list",
+            message: "Select the employee to update.",
+            choices: employees.map(
+              (employee) => `${employee.first_name} ${employee.last_name}`
+            ),
+          },
+          {
+            name: "role",
+            type: "list",
+            message: "Select the employee's new role.",
+            choices: roles.map((role) => role.title),
+          },
+        ])
+        .then((answer) => {
+          const employeeName = answer.employee.split(" ");
+          const employee = employees.find(
+            (employee) =>
+              employee.first_name === employeeName[0] &&
+              employee.last_name === employeeName[1]
+          );
+          const role = roles.find((role) => role.title === answer.role);
+          connection.query(
+            "UPDATE employee SET ? WHERE ?",
+            [
+              {
+                role_id: role.id,
+              },
+              {
+                id: employee.id,
+              },
+            ],
+            function (err, res) {
+              if (err) throw err;
+              console.log("Employee role updated succesfully!");
+              startApp();
+            }
+          );
+        }
+        );
+    });
+  });
+}
+  
