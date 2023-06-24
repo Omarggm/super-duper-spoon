@@ -1,3 +1,4 @@
+// Importing required modules
 const mysql = require("mysql2");
 const inquirer = require("inquirer");
 const express = require("express");
@@ -35,7 +36,7 @@ app.listen(PORT, () => {
 // call the function to start the app
 startApp();
 
-// function to start the app
+// This function starts the application and prompts the user with a list of actions to choose from.
 async function startApp() {
   return inquirer
     .prompt([
@@ -92,6 +93,8 @@ async function startApp() {
     });
 }
 
+
+// This function retrieves and displays all departments from the database.
 function viewDepartments() {
   connection.query("SELECT * FROM department", function (err, res) {
     if (err) throw err;
@@ -100,6 +103,8 @@ function viewDepartments() {
   });
 }
 
+
+// This function retrieves and displays all roles from the database.
 function viewRoles() {
   connection.query("SELECT * FROM role", function (err, res) {
     if (err) throw err;
@@ -108,6 +113,8 @@ function viewRoles() {
   });
 }
 
+
+// This function retrieves and displays all employees from the database.
 function viewEmployees() {
   connection.query("SELECT * FROM employee", function (err, res) {
     if (err) throw err;
@@ -140,67 +147,104 @@ function addDepartment() {
     });
 }
 
+
+// This function adds a new department to the database.
 function addEmployee() {
+  // Prompt for employee details
   inquirer
     .prompt([
       {
         name: "firstName",
         type: "input",
-        message: "Enter the emnployee's first name.",
+        message: "Enter the employee's first name.",
       },
       {
         name: "lastName",
         type: "input",
         message: "Enter the employee's last name.",
       },
-      {
-        name: "role",
-        type: "list",
-        message: "Select the employee's role.",
-        choices: roles.map((role) => role.title),
-      },
-      {
-        name: "manager",
-        type: "list",
-        message: "Enter the employee's manager.",
-        choices: [
-          "None",
-          ...employees.map(
-            (employee) => `${employee.first_name} ${employee.last_name}`
-          ),
-        ],
-      },
     ])
     .then((answer) => {
-      const role = roles.find((role) => role.title === answer.role);
-      const managerName = answer.manager.split(" ");
-      let managerId = null;
-      if (answer.manager !== "None") {
-        const manager = employees.find(
-          (employee) =>
-            employee.first_name === managerName[0] &&
-            employee.last_name === managerName[1]
-        );
-        managerId = manager.id;
-      }
-      connection.query(
-        "INSERT INTO employee SET ?",
-        {
-          first_name: answer.firstName,
-          last_name: answer.lastName,
-          role_id: role.id,
-          manager_id: managerId,
-        },
-        function (err, res) {
-          if (err) throw err;
-          console.log("Employee added succesfully!");
-          startApp();
-        }
-      );
+      // Retrieve roles from the database using the getRoles() function
+      getRoles(function (roles) {
+        // Create a list of role titles for the prompt choices
+        const roleChoices = roles.map((role) => role.title);
+        
+        // Prompt for role selection
+        inquirer
+          .prompt([
+            {
+              name: "role",
+              type: "list",
+              message: "Select the employee's role.",
+              choices: roleChoices,
+            },
+          ])
+          .then((roleAnswer) => {
+            // Find the role object based on the selected role title
+            const role = roles.find(
+              (role) => role.title === roleAnswer.role
+            );
+
+            // Retrieve employees from the database using the getEmployees() function
+            getEmployees(function (employees) {
+              // Create a list of employee names for the prompt choices
+              const employeeChoices = [
+                "None",
+                ...employees.map(
+                  (employee) => `${employee.first_name} ${employee.last_name}`
+                ),
+              ];
+              
+              // Prompt for manager selection
+              inquirer
+                .prompt([
+                  {
+                    name: "manager",
+                    type: "list",
+                    message: "Enter the employee's manager.",
+                    choices: employeeChoices,
+                  },
+                ])
+                .then((managerAnswer) => {
+                  const managerName = managerAnswer.manager.split(" ");
+                  let managerId = null;
+                  if (managerAnswer.manager !== "None") {
+                    // Find the manager object based on the selected manager name
+                    const manager = employees.find(
+                      (employee) =>
+                        employee.first_name === managerName[0] &&
+                        employee.last_name === managerName[1]
+                    );
+                    managerId = manager.id;
+                  }
+
+                  // Insert the employee into the database
+                  connection.query(
+                    "INSERT INTO employee SET ?",
+                    {
+                      first_name: answer.firstName,
+                      last_name: answer.lastName,
+                      role_id: role.id,
+                      manager_id: managerId,
+                    },
+                    function (err, res) {
+                      if (err) throw err;
+                      console.log("Employee added successfully!");
+                      startApp();
+                    }
+                  );
+                });
+            });
+          });
+      });
     });
 }
 
+
+// This function adds a new role to the database.
 function addRole() {
+  // Prompt for role details
   inquirer
     .prompt([
       {
@@ -213,34 +257,50 @@ function addRole() {
         type: "input",
         message: "What is the salary for this role?",
       },
-      {
-        name: "department",
-        type: "list",
-        message: "Select the department for this role.",
-        choices: departments.map((department) => department.name),
-      },
     ])
     .then((answer) => {
-      const department = departments.find(
-        (department) => department.name === answer.department
-      );
-      connection.query(
-        "INSERT INTO role SET ?",
-        {
-          title: answer.role,
-          salary: answer.salary,
-          department_id: department.id,
-        },
-        function (err, res) {
-          if (err) throw err;
-          console.log("Role added succesfully!");
-          startApp();
-        }
-      );
-    }
-    );
+      // Retrieve departments from the database using the getDepartments() function
+      getDepartments(function (departments) {
+        // Create a list of department names for the prompt choices
+        const departmentChoices = departments.map((department) => department.name);
+        
+        // Prompt for department selection
+        inquirer
+          .prompt([
+            {
+              name: "department",
+              type: "list",
+              message: "Select the department for this role.",
+              choices: departmentChoices,
+            },
+          ])
+          .then((departmentAnswer) => {
+            // Find the department object based on the selected department name
+            const department = departments.find(
+              (department) => department.name === departmentAnswer.department
+            );
+            
+            // Insert the role into the database
+            connection.query(
+              "INSERT INTO role SET ?",
+              {
+                title: answer.role,
+                salary: answer.salary,
+                department_id: department.id,
+              },
+              function (err, res) {
+                if (err) throw err;
+                console.log("Role added successfully!");
+                startApp();
+              }
+            );
+          });
+      });
+    });
 }
 
+
+// This function updates the role of an employee in the database.
 function updateEmployeeRole() {
   connection.query("SELECT * FROM employee", function (err, employees) {
     if (err) throw err;
@@ -290,5 +350,32 @@ function updateEmployeeRole() {
         }
         );
     });
+  });
+}
+
+
+// Function to retrieve departments from the database
+function getDepartments(callback) {
+  connection.query("SELECT * FROM department", function (err, res) {
+    if (err) throw err;
+    callback(res);
+  });
+}
+
+
+// Function to retrieve roles from the database
+function getRoles(callback) {
+  connection.query("SELECT * FROM role", function (err, res) {
+    if (err) throw err;
+    callback(res);
+  });
+}
+
+
+// Function to retrieve employees from the database
+function getEmployees(callback) {
+  connection.query("SELECT * FROM employee", function (err, res) {
+    if (err) throw err;
+    callback(res);
   });
 }
