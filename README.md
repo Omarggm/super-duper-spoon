@@ -68,6 +68,8 @@ Once the application is running, you will be presented with a list of actions to
 
 After each action is performed, the application will return to the main menu for you to choose another action or exit the application.
 
+[Watch Demo Here](https://drive.google.com/file/d/1xAQijg2GSEOgZ3keOd7gB_ATVYK2Q_GQ/view)
+
 ## Contributing
 Contributions to the Employee Management App are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request on the GitHub repository.
 
